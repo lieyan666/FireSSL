@@ -126,14 +126,14 @@ const ECService = {
 
     const issuerCertObj = new x509.X509Certificate(issuerCert);
 
-    // Build SAN extension
-    const sanBuilder = new x509.GeneralNames();
+    // Build SAN entries as JSON format for @peculiar/x509
+    const sanEntries = [];
     const dnsNames = sanDns.length > 0 ? sanDns : (subject.commonName ? [subject.commonName] : []);
     dnsNames.forEach(dns => {
-      sanBuilder.push(new x509.GeneralName('dNSName', dns));
+      sanEntries.push({ type: 'dns', value: dns });
     });
     sanIps.forEach(ip => {
-      sanBuilder.push(new x509.GeneralName('iPAddress', ip));
+      sanEntries.push({ type: 'ip', value: ip });
     });
 
     const cert = await x509.X509CertificateGenerator.create({
@@ -154,7 +154,7 @@ const ECService = {
         new x509.ExtendedKeyUsageExtension([x509.ExtendedKeyUsage.serverAuth]),
         await x509.SubjectKeyIdentifierExtension.create(keyPair.publicKey),
         await x509.AuthorityKeyIdentifierExtension.create(issuerCertObj.publicKey),
-        new x509.SubjectAlternativeNameExtension(sanBuilder),
+        new x509.SubjectAlternativeNameExtension(sanEntries),
       ],
     });
 

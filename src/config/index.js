@@ -1,9 +1,19 @@
 require('dotenv').config();
 const path = require('path');
+const crypto = require('crypto');
+
+// Generate a random session secret on startup
+const sessionSecret = crypto.randomBytes(32).toString('hex');
 
 module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 3000,
+
+  auth: {
+    password: process.env.AUTH_PASSWORD || 'firessl',
+    sessionSecret,
+    tokenExpiry: 24 * 60 * 60 * 1000, // 24 hours
+  },
 
   security: {
     keyEncryptionSecret: process.env.KEY_ENCRYPTION_SECRET || 'default-dev-secret-change-in-production',

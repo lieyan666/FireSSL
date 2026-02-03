@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
 const { errorHandler } = require('./middleware/errorHandler');
+const { authMiddleware, login, logout, checkAuth, validateToken } = require('./middleware/auth');
 const routes = require('./routes');
 
 const app = express();
@@ -11,10 +12,11 @@ const app = express();
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:"],
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'script-src': ["'self'", "'unsafe-inline'"],
+      'script-src-attr': ["'unsafe-inline'"],
+      'style-src': ["'self'", "'unsafe-inline'"],
+      'img-src': ["'self'", "data:"],
     },
   },
 }));
@@ -27,12 +29,21 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use(express.static(path.join(__dirname, '../public')));
 
-// API routes
-app.use('/api/v1', routes);
+// Auth routes (public)
+app.post('/api/v1/auth/login', login);
+app.post('/api/v1/auth/logout', logout);
+app.get('/api/v1/auth/check', checkAuth);
 
-// Serve index.html for root
+// Protected API routes
+app.use('/api/v1', authMiddleware, routes);
+
+// Serve index.html for root and login
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/login.html'));
 });
 
 // Error handling

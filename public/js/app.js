@@ -69,6 +69,15 @@ const app = {
     window.location.hash = param ? `${page}/${param}` : page;
   },
 
+  async checkAuth() {
+    const authenticated = await api.auth.check();
+    if (!authenticated) {
+      window.location.href = '/login';
+      return false;
+    }
+    return true;
+  },
+
   async route() {
     const hash = window.location.hash.slice(1) || 'dashboard';
     const [page, param] = hash.split('/');
@@ -102,8 +111,17 @@ const app = {
         await DashboardPage.render();
     }
   },
+
+  logout() {
+    api.auth.logout();
+  },
 };
 
 // Initialize
 window.addEventListener('hashchange', () => app.route());
-window.addEventListener('DOMContentLoaded', () => app.route());
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check authentication first
+  if (await app.checkAuth()) {
+    app.route();
+  }
+});
